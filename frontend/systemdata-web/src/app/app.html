@@ -1,0 +1,108 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#inicio" aria-label="SystemData, inicio" (click)="$event.preventDefault(); navigate('upload')">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="brand-copy"><strong>SystemData</strong><small>GESTIÓN DE DATOS</small></span>
+    </a>
+
+    <div class="nav-label">ESPACIO DE TRABAJO</div>
+    <nav aria-label="Navegación principal">
+      <button class="nav-item" [class.active]="page() === 'upload'" [attr.aria-current]="page() === 'upload' ? 'page' : null" (click)="navigate('upload')">
+        <span class="nav-icon" aria-hidden="true">↑</span><span>Cargar archivo</span>
+      </button>
+      <button class="nav-item" [class.active]="page() === 'process'" [attr.aria-current]="page() === 'process' ? 'page' : null" (click)="navigate('process')">
+        <span class="nav-icon" aria-hidden="true">◷</span><span>Procesar registros</span>
+      </button>
+      <button class="nav-item" [class.active]="page() === 'quarantine'" [attr.aria-current]="page() === 'quarantine' ? 'page' : null" (click)="navigate('quarantine')">
+        <span class="nav-icon" aria-hidden="true">▤</span><span>Cuarentena</span><span class="nav-count">{{ quarantine().length }}</span>
+      </button>
+    </nav>
+
+    
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="breadcrumb"><span>SystemData</span><span class="crumb-divider">/</span><strong>{{ page() === 'upload' ? 'Carga de datos' : page() === 'process' ? 'Procesamiento' : 'Cuarentena' }}</strong></div>
+      <div class="topbar-right"><span class="connection"><span class="status-dot neutral"></span> Entorno local</span><span class="topbar-divider"></span><span class="profile-avatar">OP</span><span class="profile-name">Operaciones</span></div>
+    </header>
+
+    <div class="content">
+      @if (page() === 'upload') {
+        <section class="page-heading">
+          <div><div class="eyebrow"><span class="eyebrow-mark"></span> INGESTA DE DATOS</div><h1>Carga de Información</h1><p>Importa, revisa y registra tus archivos de procesamiento.</p></div>
+          <div class="heading-meta"><span class="meta-icon">↗</span><span><strong>Flujo de importación</strong><small>CSV · Hasta 25 MB</small></span></div>
+        </section>
+
+        <div class="steps" aria-label="Pasos de carga">
+          <div class="step active"><span class="step-number">01</span><span><b>Selecciona</b><small>Sube tu archivo</small></span></div><span class="step-line"></span>
+          <div class="step" [class.active]="headers().length > 0"><span class="step-number">02</span><span><b>Previsualiza</b><small>Verifica los datos</small></span></div><span class="step-line"></span>
+          <div class="step" [class.active]="!!message()"><span class="step-number">03</span><span><b>Confirma</b><small>Registra la carga</small></span></div>
+        </div>
+
+        <div class="upload-layout">
+          <section class="panel upload-panel">
+            <div class="panel-heading"><div><span class="section-kicker">NUEVA IMPORTACIÓN</span><h2>Archivo de origen</h2><p>Selecciona un archivo CSV para revisar su contenido.</p></div><span class="file-type">CSV</span></div>
+            <label class="dropzone" for="csvFile"><span class="upload-icon" aria-hidden="true">↑</span><strong>{{ file()?.name ?? 'Selecciona tu archivo CSV' }}</strong><span>{{ file() ? fileSizeLabel() : 'haz clic para buscarlo en tu equipo' }}</span><em>{{ file() ? 'Cambiar archivo' : 'Seleccionar archivo' }}</em><input #csvFile id="csvFile" type="file" accept=".csv,text/csv" [disabled]="busy()" (change)="onFileChange($event)" /></label>
+            <div class="requirements"><span class="info-icon" aria-hidden="true">i</span><div><b>Formato requerido</b><p>Nombre <code>commerce_DDMMYYYY.csv</code>. Columnas: <code>pc_processdate</code>, <code>pc_nomcomred</code> y <code>pc_numdoc</code>.</p></div><span class="limit-label">Máx. 25 MB</span></div>
+            @if (error()) { <div class="alert error-alert" role="alert"><span>!</span>{{ error() }}</div> }
+            <div class="panel-actions"><span class="privacy"><span aria-hidden="true">◉</span> Vista previa disponible antes del registro</span><button class="button primary" [disabled]="!file() || busy()" (click)="upload()">{{ busy() ? 'Registrando…' : 'Registrar archivo' }} <span aria-hidden="true">→</span></button></div>
+          </section>
+
+          <aside class="side-column">
+            <section class="side-note"><div class="note-icon">✳</div><span class="section-kicker">ANTES DE EMPEZAR</span><h3>Prepara tus datos</h3><p>Comprueba que el archivo tenga las columnas obligatorias y fechas con un formato reconocido.</p><div class="note-rule"></div><div class="note-tip"><span class="tip-check">✓</span><span><b>Recomendación</b><small>Guarda el CSV como UTF-8 para conservar nombres y acentos.</small></span></div></section>
+            <section class="mini-card"><span class="mini-icon">⌁</span><span><b>Revisión en navegador</b><small>Inspecciona las primeras filas antes de enviar.</small></span></section>
+          </aside>
+        </div>
+
+        @if (headers().length > 0) {
+          <section class="panel preview-panel"><div class="panel-heading"><div><span class="section-kicker">VALIDACIÓN LOCAL</span><h2>Vista previa <span class="subtle-count">{{ totalRows() }} filas detectadas</span></h2><p>Comprueba los datos antes de registrarlos.</p></div><span class="preview-status"><span class="status-dot"></span> Archivo listo</span></div><div class="table-wrap"><table><thead><tr>@for (header of headers(); track $index) { <th>{{ header }}</th> }</tr></thead><tbody>@for (row of previewRows(); track $index) { <tr>@for (header of headers(); track $index) { <td>{{ row[$index] }}</td> }</tr> }</tbody></table></div></section>
+        }
+      }
+
+      @if (page() === 'process') {
+        <section class="page-heading"><div><div class="eyebrow"><span class="eyebrow-mark"></span> VALIDACIÓN DE DATOS</div><h1>Procesar registros</h1><p>Ejecuta las reglas de calidad para los comercios de una fecha.</p></div><div class="heading-meta"><span class="meta-icon">✓</span><span><strong>Proceso transaccional</strong><small>Resultados consistentes</small></span></div></section>
+        <section class="panel process-panel"><div class="panel-heading"><div><span class="section-kicker">EJECUCIÓN POR FECHA</span><h2>Selecciona el periodo a procesar</h2><p>Se revisarán los registros cuya fecha de proceso coincida con la seleccionada.</p></div><span class="calendar-icon" aria-hidden="true">▦</span></div>
+          <div class="process-form"><label for="processDate">Fecha de proceso</label><div class="date-row"><input id="processDate" type="date" [(ngModel)]="processDate" /><button class="button primary" [disabled]="busy()" (click)="process()">{{ busy() ? 'Procesando…' : 'Iniciar validación' }} <span aria-hidden="true">→</span></button></div>
+            <div class="validation-rules"><div class="rule-heading"><span class="rule-title">REGLAS APLICADAS</span><span class="rule-count"></span></div><div><span class="check-mark">✓</span> El nombre comercial debe estar informado</div><div><span class="check-mark">✓</span> El número de documento debe contener solo dígitos</div></div>
+          </div>
+          @if (error()) { <div class="alert error-alert" role="alert"><span>!</span>{{ error() }}</div> }
+          @if (message()) { <div class="alert success-alert" role="status"><span>✓</span>{{ message() }} <button class="text-button" (click)="navigate('quarantine')">Revisar cuarentena →</button></div> }
+        </section>
+        <div class="process-footnote"><span class="info-icon">i</span><span>Los registros que no cumplan las reglas se moverán a cuarentena junto con el motivo. La operación se ejecuta en una transacción.</span></div>
+      }
+
+      @if (page() === 'quarantine') {
+        <section class="page-heading"><div><div class="eyebrow"><span class="eyebrow-mark"></span> CONTROL DE CALIDAD</div><h1>Registros en cuarentena</h1><p>Consulta los registros que requieren revisión o corrección.</p></div><button class="button secondary" (click)="loadQuarantine()"><span aria-hidden="true">↻</span> Actualizar datos</button></section>
+        @if (error()) { <div class="alert error-alert" role="alert"><span>!</span>{{ error() }}</div> }
+        
+<section class="summary-row">
+  <div class="summary-card">
+    <span class="summary-icon amber">!</span>
+    <div>
+      <small>REGISTROS CON ERRORES</small>
+      <strong>{{ quarantine().length }}</strong>
+    </div>
+  </div>
+</section>
+
+        <section class="panel quarantine-panel"><div class="panel-heading"><div><span class="section-kicker">DETALLE DE INCIDENCIAS</span><h2>Registros por revisar</h2><p>Los valores originales se conservan para facilitar el análisis.</p></div><span class="subtle-count">{{ quarantine().length }} registros</span></div>
+          @if (quarantine().length > 0) {
+            <div class="table-wrap"><table><thead><tr><th>FECHA</th><th>NOMBRE COMERCIAL</th><th>NÚMERO DE DOCUMENTO</th><th>MOTIVO</th><th>ESTADO</th></tr></thead><tbody>@for (row of quarantine(); track row.id) { <tr><td>{{ row.processDate ?? '—' }}</td><td>{{ row.merchantName || '—' }}</td><td class="mono">{{ row.documentNumber || '—' }}</td><td><span class="reason-chip">{{ row.reason }}</span></td><td><span class="status-pill">Pendiente</span></td></tr> }</tbody></table></div>
+          } @else if (!error()) {
+            <div class="empty-state"><div class="empty-icon">✓</div><span class="section-kicker">SIN INCIDENCIAS</span><h3>Todo está al día</h3><p>No hay registros en cuarentena. Procesa una fecha para revisar los comercios cargados.</p><button class="button secondary" (click)="navigate('process')">Ir a procesar <span aria-hidden="true">→</span></button></div>
+          }
+        </section>
+      }
+      <footer><span class="footer-brand">SystemData</span><span class="footer-separator">·</span> Gestión y validación de datos comerciales <span class="footer-right">Panel de operaciones</span></footer>
+    </div>
+  </main>
+</div>
+
+@if (successToast()) {
+  <div class="toast-success" role="status" aria-live="polite">
+    <span class="toast-check" aria-hidden="true">✓</span>
+    <span>{{ successToast() }}</span>
+    <button type="button" class="toast-close" aria-label="Cerrar notificación" (click)="closeToast()">×</button>
+  </div>
+}

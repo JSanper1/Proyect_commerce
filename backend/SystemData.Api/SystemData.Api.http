@@ -1,0 +1,13 @@
+@SystemData_Api_HostAddress = http://localhost:5111
+
+### Consultar registros en cuarentena
+GET {{SystemData_Api_HostAddress}}/api/commerce/quarantine
+Accept: application/json
+
+### Procesar registros de una fecha
+POST {{SystemData_Api_HostAddress}}/api/commerce/process
+Content-Type: application/json
+
+{
+  "processDate": "2026-10-16"
+}
